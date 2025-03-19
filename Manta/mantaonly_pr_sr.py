@@ -3,10 +3,10 @@ import csv
 
 manta_vcf_file = "HG002.diploidSV.vcf.gz"  
 coordinates_bed_file = "HG002_merged_mantaonly.bed"
-output_pr_sv_tsv_file = "HG002_pr_sr_mantaonly.tsv"
+output_pr_sv_tsv_file = "HG002_pr_sr_mantaonly_with_coverage.tsv"
 
 
-def extract_pr_sr(manta_vcf, coordinates_bed, output_file, margin=0):
+def extract_pr_sr(manta_vcf, coordinates_bed, output_file, margin=1000000):
     results = []  
 
     with open(coordinates_bed, 'r') as bed_file:
@@ -26,21 +26,26 @@ def extract_pr_sr(manta_vcf, coordinates_bed, output_file, margin=0):
                 pr = record.samples.values()[0].get("PR", None)
                 sr = record.samples.values()[0].get("SR", None)
                 
+                # Summing of PR and SR for coverage
+                pr_coverage = pr[0] + pr[1] if pr else 0
+                sr_coverage = sr[0] + sr[1] if sr else 0
+                total_coverage = pr_coverage + sr_coverage
+
                 pr_str = "(" + str(pr[0]) + ", " + str(pr[1]) + ")" if pr else ""
                 sr_str = "(" + str(sr[0]) + ", " + str(sr[1]) + ")" if sr else ""
                 
-                results.append([chrom, manta_start, manta_end, pr_str, sr_str])
+                results.append([chrom, manta_start, manta_end, pr_str, sr_str, total_coverage])
+
 
     with open(output_file, "w", newline="") as output_tsv:
         tsv_writer = csv.writer(output_tsv, delimiter="\t")
-        tsv_writer.writerow(["Chromosome", "Manta_Start", "Manta_End", "PR", "SR"])  
+        tsv_writer.writerow(["Chromosome", "Manta_Start", "Manta_End", "PR", "SR", "Manta_Coverage"])  # Added Coverage column
         
         for result in results:
             tsv_writer.writerow([str(result[0]).ljust(12), str(result[1]).ljust(12), str(result[2]).ljust(12),
-                     str(result[3]).ljust(15), str(result[4]).ljust(15)])
+                     str(result[3]).ljust(15), str(result[4]).ljust(15), str(result[5]).ljust(10)])
 
-    
-    print("PR and SR data with coordinates saved to", output_file)
+    print("PR, SR, and Coverage data with coordinates saved to", output_file)
 
 def main():
     extract_pr_sr(manta_vcf_file, coordinates_bed_file, output_pr_sv_tsv_file)
