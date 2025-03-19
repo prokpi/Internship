@@ -20,6 +20,7 @@ for key, values in header_data.items():
 match_count = 0
 updated_rows = []
 
+#total number of sample calls = 9111; total no. of MANTA appearances = 9111
 with open("benchmarking_HG002_header.bed", "r") as file:
     reader = csv.reader(file, delimiter="\t")
     
