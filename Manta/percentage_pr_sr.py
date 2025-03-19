@@ -1,7 +1,7 @@
 import csv
 
-input_file = "HG002_pr_sr_mantaonly.tsv"
-output_file = "HG002_pr_sr_percentage.tsv"
+input_file = "HG002_pr_sr_mantaonly_with_coverage.tsv"
+output_file = "HG002_pr_sr_mantaonly_with_coverage.tsv"
 
 def compute_percentage(partial, total_sum):
     if total_sum == 0:
@@ -30,27 +30,35 @@ def process_file(input_file, output_file):
             manta_start = row["Manta_Start"]
             manta_end = row["Manta_End"]
 
+            # Extracting and cleaning PR (Paired-Read) data
             pr_tuple = clean_tuple(row["PR"])
             if pr_tuple:
                 pr_percentage = compute_percentage(pr_tuple[1], sum(pr_tuple))
             else:
                 pr_percentage = ""  
 
+            # Extracting and cleaning SR (Split-Read) data
             sr_tuple = clean_tuple(row["SR"])
             if sr_tuple:
                 sr_percentage = compute_percentage(sr_tuple[1], sum(sr_tuple))
             else:
                 sr_percentage = ""  
-            
-            results.append([chrom, manta_start, manta_end, row["PR"], row["SR"], pr_percentage, sr_percentage])
 
+            # Get Manta_Coverage directly from the input file (as it's already calculated)
+            manta_coverage = row.get("Manta_Coverage", "")
+
+            # Append all information to results
+            results.append([chrom, manta_start, manta_end, row["PR"], row["SR"], pr_percentage, sr_percentage, manta_coverage])
+
+    # Write to output file
     with open(output_file, 'w', newline="") as file:
         writer = csv.writer(file, delimiter="\t")
-        writer.writerow(["Chromosome", "Manta_Start", "Manta_End", "PR", "SR", "PR_Percentage", "SR_Percentage"])
+        writer.writerow(["Chromosome", "Manta_Start", "Manta_End", "PR", "SR", "PR_Percentage", "SR_Percentage", "Manta_Coverage"])
         writer.writerows(results)
 
     print("File processed and saved to", output_file)
 
+# Call the function to process the file
 process_file(input_file, output_file)
 
 
